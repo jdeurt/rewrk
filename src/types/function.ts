@@ -1,3 +1,1 @@
-export type Func<T extends unknown[] = unknown[], R = unknown> = (
-    ...args: T
-) => R;
+export type Func<T extends any[] = any[], R = any> = (...args: T) => R;
