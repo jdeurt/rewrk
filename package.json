@@ -1,10 +1,8 @@
 {
     "version": "0.0.0",
-    "name": "TODO",
-    "umd:name": "TODO",
-    "repository": "TODO_USERNAME/TODO_REPO",
-    "description": "TODO_MODULE_DESCRIPTION",
-    "unpkg": "dist/index.min.js",
+    "name": "rewrk",
+    "repository": "jdeurt/rewrk",
+    "description": "Dead simple React web workers.",
     "module": "dist/index.mjs",
     "main": "dist/index.js",
     "types": "types/index.d.ts",
@@ -33,16 +31,20 @@
         "build": "rollup -c",
         "prepublishOnly": "npm run build",
         "types": "tsc --noEmit",
-        "test": "jest"
+        "test": "jest",
+        "publish:base": "git push origin master --tags && npm publish",
+        "publish:patch": "npm version patch && yarn publish:base",
+        "publish:minor": "npm version minor && yarn publish:base",
+        "publish:major": "npm version major && yarn publish:base"
     },
     "keywords": [
-        "TODO",
-        "module",
-        "keywords"
+        "web worker",
+        "react"
     ],
     "devDependencies": {
         "@rollup/plugin-node-resolve": "13.1.3",
         "@types/jest": "^28.1.7",
+        "@types/react": "^18.0.26",
         "@typescript-eslint/eslint-plugin": "^5.30.7",
         "@typescript-eslint/parser": "^5.30.7",
         "eslint": "^8.20.0",
@@ -51,9 +53,11 @@
         "jest": "^28.1.3",
         "prettier": "^2.7.1",
         "rollup": "2.66.1",
-        "rollup-plugin-terser": "7.0.2",
         "rollup-plugin-typescript2": "0.27.1",
         "ts-jest": "^28.0.8",
         "typescript": "4.5.5"
+    },
+    "peerDependencies": {
+        "react": "^18.2.0"
     }
 }

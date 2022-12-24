@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "rollup-plugin-typescript2";
-import { terser } from "rollup-plugin-terser";
 import pkg from "./package.json";
 
 export default {
@@ -16,14 +15,6 @@ export default {
             file: pkg.main,
             sourcemap: false,
             esModule: false,
-        },
-        {
-            name: pkg["umd:name"] || pkg.name,
-            format: "umd",
-            file: pkg.unpkg,
-            sourcemap: false,
-            esModule: false,
-            plugins: [terser()],
         },
     ],
     external: [
