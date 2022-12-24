@@ -1,4 +1,4 @@
-import type { Async } from "./Async";
+import type { Async } from "./async";
 import type { Func } from "./function";
 
 export type AsyncFunctionProps<T extends Record<string, unknown>> = {
