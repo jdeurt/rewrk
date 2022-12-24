@@ -21,7 +21,7 @@ export function useWorker<T extends Record<string, unknown>>(
 
             const workerFn = makeWorkerFn(workerModule);
             const workerURL = makeWorkerURL(workerFn);
-            const workerObj = new Worker(workerURL);
+            const workerObj = new Worker(workerURL, { type: "module" });
 
             setWorker(workerObj);
             setWorkerProxy(makeWorkerDispatchProxy(workerObj, workerModule));
