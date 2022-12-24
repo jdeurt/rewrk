@@ -8,19 +8,30 @@
 
 ## Usage
 
+#### some.worker.js
+
+```jsx
+export function foo(bar, baz) {
+    return bar + baz;
+}
+```
+
+#### my-component.jsx
+
 ```jsx
 import { useWorker } from "rewrk";
 
 export const MyComponent = (props) => {
-    // From a worker file
-    const workerFromFile = useWorker("./relative/path/to/worker.js");
+    const worker = useWorker(import("./some.worker.js"));
 
-    // Or from a function
-    const workerFromFunction = useWorker(
-        (props) => {
-            doSomethingHeavyWith(props);
-        },
-        [props]
+    useEffect(() => {
+        worker?.foo(1, 2).then(console.log); // 3
+    }, [worker]);
+
+    return worker === undefined ? (
+        <span>Loading...</span>
+    ) : (
+        <span>Worker ready!</span>
     );
 };
 ```

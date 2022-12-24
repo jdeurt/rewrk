@@ -1,24 +1,38 @@
 import { useEffect, useState } from "react";
-import { createWorkerURL } from "../util/create-worker-url";
 
-export function useWorker<T extends unknown[]>(
-    workerFn: (...contextualArgs: T) => unknown,
-    context: T
-): Worker;
-export function useWorker(workerFn: () => unknown): Worker;
-export function useWorker(workerFilePath: string): Worker;
+import type { AsyncFunctionProps } from "../types/async-function-props";
+import { makeWorkerDispatchProxy } from "../util/make-worker-dispatch-proxy";
+import { makeWorkerFn } from "../util/make-worker-fn";
+import { makeWorkerURL } from "../util/make-worker-url";
 
-export function useWorker<T extends unknown[]>(
-    workerFnOrFilePath: ((context?: T) => unknown) | string,
-    context?: T
-): Worker {
-    const [worker, setWorker] = useState(
-        new Worker(createWorkerURL(workerFnOrFilePath, context))
-    );
+export function useWorker<T extends Record<string, unknown>>(
+    dynamicImport: Promise<T>
+) {
+    const [worker, setWorker] = useState<Worker>();
+    const [workerProxy, setWorkerProxy] = useState<AsyncFunctionProps<T>>();
 
     useEffect(() => {
-        setWorker(new Worker(createWorkerURL(workerFnOrFilePath, context)));
-    }, context);
+        dynamicImport.then((importedModule) => {
+            const workerModule = Object.fromEntries(
+                Object.entries(importedModule).filter(
+                    ([, v]) => typeof v === "function"
+                )
+            ) as T;
 
-    return worker;
+            const workerFn = makeWorkerFn(workerModule);
+            const workerURL = makeWorkerURL(workerFn);
+            const workerObj = new Worker(workerURL);
+
+            setWorker(workerObj);
+            setWorkerProxy(makeWorkerDispatchProxy(workerObj, workerModule));
+        });
+
+        return () => {
+            worker?.terminate();
+            setWorker(undefined);
+            setWorkerProxy(undefined);
+        };
+    }, []);
+
+    return workerProxy;
 }
