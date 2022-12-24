@@ -32,7 +32,7 @@
         "prepublishOnly": "npm run build",
         "types": "tsc --noEmit",
         "test": "jest",
-        "publish:base": "git push origin master --tags && npm publish",
+        "publish:base": "git push origin main --tags && npm publish",
         "publish:patch": "npm version patch && yarn publish:base",
         "publish:minor": "npm version minor && yarn publish:base",
         "publish:major": "npm version major && yarn publish:base"
