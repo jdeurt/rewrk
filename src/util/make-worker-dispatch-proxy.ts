@@ -1,4 +1,4 @@
-import { AsyncFunctionProps } from "../types/async-function-props";
+import { WorkerMethods } from "../types/worker-methods";
 import type { FailureMessage, SuccessMessage } from "../types/worker-message";
 
 export function makeWorkerDispatchProxy<T extends Record<string, unknown>>(
@@ -32,5 +32,5 @@ export function makeWorkerDispatchProxy<T extends Record<string, unknown>>(
 
                     worker.addEventListener("message", resultListener);
                 }),
-    }) as AsyncFunctionProps<T>;
+    }) as WorkerMethods<T>;
 }
