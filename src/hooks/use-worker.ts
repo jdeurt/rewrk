@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 
 import type { ProxiedWorkerMethods } from "../types/proxied-worker-methods";
 import { makeWorkerFn } from "../util/make-worker-fn";
@@ -18,22 +18,18 @@ export function useWorker<T extends Record<string, unknown>>(
 ): ProxiedWorkerMethods<T> {
     const workerProxy = new WorkerProxy<T>();
 
-    const workerPromise = useMemo(
-        () =>
-            dynamicImport.then((workerModule) => {
-                const workerFn = makeWorkerFn(workerModule);
-                const workerURL = makeWorkerURL(workerFn);
-                const workerObj = new Worker(workerURL, {
-                    type: "module",
-                    ...options,
-                });
+    const worker = usePromise(
+        dynamicImport.then((workerModule) => {
+            const workerFn = makeWorkerFn(workerModule);
+            const workerURL = makeWorkerURL(workerFn);
+            const workerObj = new Worker(workerURL, {
+                type: "module",
+                ...options,
+            });
 
-                return workerObj;
-            }),
-        [dynamicImport]
+            return workerObj;
+        })
     );
-
-    const worker = usePromise(workerPromise);
 
     useEffect(() => {
         if (!worker) return;
