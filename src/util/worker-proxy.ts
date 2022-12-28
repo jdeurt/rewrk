@@ -65,6 +65,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     }
 
     cycleOperations(): void {
+        console.log("Should cycle operations", this.operationConsumer);
+
         if (!this.operationConsumer) return;
 
         console.log(
