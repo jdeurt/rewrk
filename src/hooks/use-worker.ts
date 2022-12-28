@@ -20,6 +20,7 @@ export function useWorker<T extends Record<string, unknown>>(
     const workerPromise = useMemo(
         () =>
             dynamicImport
+                .then((module) => (console.log(module), module))
                 .then(makeWorkerFn)
                 .then(makeWorkerURL)
                 .then(
@@ -29,7 +30,7 @@ export function useWorker<T extends Record<string, unknown>>(
                             ...options,
                         })
                 ),
-        [dynamicImport]
+        []
     );
 
     useEffect(() => {
