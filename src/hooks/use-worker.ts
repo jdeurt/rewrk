@@ -20,6 +20,7 @@ export function useWorker<T extends Record<string, unknown>>(
 
     const worker = usePromise(
         useMemo(dynamicImport, [dynamicImport]).then((workerModule) => {
+            console.log("called");
             const workerFn = makeWorkerFn(workerModule);
             const workerURL = makeWorkerURL(workerFn);
             const workerObj = new Worker(workerURL, {
