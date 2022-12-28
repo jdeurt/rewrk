@@ -14,7 +14,7 @@ Creates a [worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker) from
 
 #### Arguments
 
--   `dynamicImport` - A dynamic import of the worker module. The module must export at least one function. Non-function exports will be stripped away.
+-   `dynamicImport` - A function that returns dynamic import of the worker module. The module must export at least one function. Non-function exports will be stripped away.
 -   `options?` - Options to pass to the worker constructor. By default the `type` option is set to `"module"`.
 
 #### Returns
@@ -27,7 +27,7 @@ A proxy object that can be used to call the worker's exported functions. The pro
 import { useWorker } from "rewrk";
 
 const WorkerComponent = () => {
-    const worker = useWorker(import("./worker"));
+    const worker = useWorker(() => import("./worker"));
 
     return <button onClick={() => worker.doSomething()}>Do something</button>;
 };

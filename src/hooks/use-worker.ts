@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import type { ProxiedWorkerMethods } from "../types/proxied-worker-methods";
 import { makeWorkerFn } from "../util/make-worker-fn";
@@ -13,13 +13,13 @@ import { WorkerProxy } from "../util/worker-proxy";
  * @returns A proxy object that can be used to call the worker's exported functions. The proxy object will be available immidiately despite the dynamic import returning a Promise.
  */
 export function useWorker<T extends Record<string, unknown>>(
-    dynamicImport: Promise<T>,
+    dynamicImport: () => Promise<T>,
     options?: WorkerOptions
 ): ProxiedWorkerMethods<T> {
     const workerProxy = new WorkerProxy<T>();
 
     const worker = usePromise(
-        dynamicImport.then((workerModule) => {
+        useMemo(dynamicImport, [dynamicImport]).then((workerModule) => {
             const workerFn = makeWorkerFn(workerModule);
             const workerURL = makeWorkerURL(workerFn);
             const workerObj = new Worker(workerURL, {
