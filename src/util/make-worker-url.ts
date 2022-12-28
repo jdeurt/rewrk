@@ -1,3 +1,7 @@
 export function makeWorkerURL(workerFn: Function): URL {
-    return new URL(URL.createObjectURL(new Blob([`(${workerFn})()`])));
+    return new URL(
+        URL.createObjectURL(
+            new Blob([`(${workerFn})()`], { type: "text/javascript" })
+        )
+    );
 }
