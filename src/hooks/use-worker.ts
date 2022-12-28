@@ -18,7 +18,6 @@ export function useWorker<T extends Record<string, unknown>>(
     const workerProxy = new WorkerProxy<T>();
 
     const [worker, setWorker] = useState<Worker>();
-    const [shouldTerminate, setShouldTerminate] = useState(false);
 
     const workerPromise = useMemo(
         () =>
@@ -36,25 +35,23 @@ export function useWorker<T extends Record<string, unknown>>(
     );
 
     useEffect(() => {
-        workerPromise.then((worker) => {
-            if (shouldTerminate) {
-                workerProxy.detachConsumer();
-                worker.terminate();
-                setShouldTerminate(false);
-            } else {
-                workerProxy.attachConsumer(worker);
-                setWorker(worker);
-            }
-        });
+        workerPromise.then(setWorker);
 
         return () => {
-            if (!worker) setShouldTerminate(true);
-            else {
-                workerProxy.detachConsumer();
+            workerPromise.then((worker) => {
                 worker.terminate();
-            }
+                setWorker(undefined);
+            });
         };
     }, []);
+
+    useEffect(() => {
+        if (worker) workerProxy.attachConsumer(worker);
+
+        return () => {
+            workerProxy.detachConsumer();
+        };
+    }, [worker]);
 
     return workerProxy.methods;
 }
