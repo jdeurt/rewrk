@@ -29,7 +29,7 @@ export function useWorker<T extends Record<string, unknown>>(
                             ...options,
                         })
                 ),
-        []
+        [dynamicImport]
     );
 
     useEffect(() => {
