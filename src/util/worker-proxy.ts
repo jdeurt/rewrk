@@ -18,6 +18,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
                         [name, args],
                     ];
 
+                    console.log("Producing operation", name, args);
+
                     this.cycleOperations();
                 }),
     });
@@ -41,6 +43,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     }
 
     attachConsumer(worker: Worker): void {
+        console.log("Attaching consumer", worker);
+
         this.operationConsumer = worker;
 
         this.operationConsumer.addEventListener(
@@ -52,6 +56,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     }
 
     detachConsumer(): void {
+        console.log("Dettaching consumer", this.operationConsumer);
+
         this.operationConsumer?.removeEventListener(
             "message",
             this.operationConsumerListener
@@ -78,6 +84,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
         if (!this.operationConsumer) return;
 
         const [, [name, args]] = operation;
+
+        console.log("Consuming operation", id, name, args);
 
         this.operationConsumer.postMessage(["exec", id, name, args]);
     }
