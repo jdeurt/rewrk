@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ProxiedWorkerMethods } from "../types/proxied-worker-methods";
 import { makeWorkerFn } from "../util/make-worker-fn";
 import { makeWorkerURL } from "../util/make-worker-url";
+import { usePromise } from "../util/use-promise";
 import { WorkerProxy } from "../util/worker-proxy";
 
 /**
@@ -17,23 +18,33 @@ export function useWorker<T extends Record<string, unknown>>(
 ): ProxiedWorkerMethods<T> {
     const workerProxy = new WorkerProxy<T>();
 
-    useEffect(() => {
-        dynamicImport.then((workerModule) => {
-            const workerFn = makeWorkerFn(workerModule);
-            const workerURL = makeWorkerURL(workerFn);
-
-            workerProxy.attachConsumer(
-                new Worker(workerURL, {
+    const workerPromise = useMemo(
+        () =>
+            dynamicImport.then((workerModule) => {
+                const workerFn = makeWorkerFn(workerModule);
+                const workerURL = makeWorkerURL(workerFn);
+                const workerObj = new Worker(workerURL, {
                     type: "module",
                     ...options,
-                })
-            );
-        });
+                });
+
+                return workerObj;
+            }),
+        [dynamicImport]
+    );
+
+    const worker = usePromise(workerPromise);
+
+    useEffect(() => {
+        if (!worker) return;
+
+        workerProxy.attachConsumer(worker);
 
         return () => {
-            workerProxy.destroyConsumer();
+            worker.terminate();
+            workerProxy.detachConsumer();
         };
-    }, []);
+    }, [worker]);
 
     return workerProxy.methods;
 }
