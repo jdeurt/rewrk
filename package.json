@@ -1,5 +1,5 @@
 {
-    "version": "1.2.6",
+    "version": "1.2.7",
     "name": "rewrk",
     "repository": "jdeurt/rewrk",
     "description": "Dead simple React web workers.",
