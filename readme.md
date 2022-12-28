@@ -6,33 +6,30 @@
 
 > Dead simple React web workers.
 
-## Usage
+## API
 
-#### some.worker.js
+### `useWorker<T extends Record<string, unknown>>(dynamicImport: Promise<T>, options?: WorkerOptions): ProxiedWorkerMethods<T>`
 
-```jsx
-export function foo(bar, baz) {
-    return bar + baz;
-}
-```
+Creates a [worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker) from a dynamic import and returns a proxy object that can be used to call the worker's exported functions.
 
-#### my-component.jsx
+#### Arguments
+
+-   `dynamicImport` - A dynamic import of the worker module. The module must export at least one function. Non-function exports will be stripped away.
+-   `options?` - Options to pass to the worker constructor. By default the `type` option is set to `"module"`.
+
+#### Returns
+
+A proxy object that can be used to call the worker's exported functions. The proxy object will be available immidiately despite the dynamic import returning a Promise.
+
+#### Usage
 
 ```jsx
 import { useWorker } from "rewrk";
 
-export const MyComponent = (props) => {
-    const worker = useWorker(import("./some.worker.js"));
+const WorkerComponent = () => {
+    const worker = useWorker(import("./worker"));
 
-    useEffect(() => {
-        worker?.foo(1, 2).then(console.log); // 3
-    }, [worker]);
-
-    return worker === undefined ? (
-        <span>Loading...</span>
-    ) : (
-        <span>Worker ready!</span>
-    );
+    return <button onClick={() => worker.doSomething()}>Do something</button>;
 };
 ```
 

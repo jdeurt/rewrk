@@ -1,52 +1,39 @@
-import { useEffect, useState } from "react";
-import { OnWorkerReadyCallback } from "../types/on-worker-ready-callback";
+import { useEffect } from "react";
 
-import { WorkerMethods } from "../types/worker-methods";
-import { makeWorkerDispatchProxy } from "../util/make-worker-dispatch-proxy";
+import type { ProxiedWorkerMethods } from "../types/proxied-worker-methods";
 import { makeWorkerFn } from "../util/make-worker-fn";
 import { makeWorkerURL } from "../util/make-worker-url";
+import { WorkerProxy } from "../util/worker-proxy";
 
+/**
+ * Creates a worker from a dynamic import and returns a proxy object that can be used to call the worker's exported functions.
+ * @param dynamicImport A dynamic import of the worker module. The module must export at least one function. Non-function exports will be stripped away.
+ * @param options Options to pass to the worker constructor. By default the `type` option is set to `"module"`.
+ * @returns A proxy object that can be used to call the worker's exported functions. The proxy object will be available immidiately despite the dynamic import returning a Promise.
+ */
 export function useWorker<T extends Record<string, unknown>>(
     dynamicImport: Promise<T>,
-    onReady?: OnWorkerReadyCallback<T>,
     options?: WorkerOptions
-): WorkerMethods<T> | undefined {
-    const [worker, setWorker] = useState<Worker>();
-    const [workerProxy, setWorkerProxy] = useState<WorkerMethods<T>>();
+): ProxiedWorkerMethods<T> {
+    const workerProxy = new WorkerProxy<T>();
 
     useEffect(() => {
-        dynamicImport.then((importedModule) => {
-            const workerModule = Object.fromEntries(
-                Object.entries(importedModule).filter(
-                    ([, v]) => typeof v === "function"
-                )
-            ) as T;
-
+        dynamicImport.then((workerModule) => {
             const workerFn = makeWorkerFn(workerModule);
             const workerURL = makeWorkerURL(workerFn);
-            const workerObj = new Worker(workerURL, {
-                type: "module",
-                ...options,
-            });
 
-            setWorker(workerObj);
-            setWorkerProxy(makeWorkerDispatchProxy(workerObj, workerModule));
+            workerProxy.attachConsumer(
+                new Worker(workerURL, {
+                    type: "module",
+                    ...options,
+                })
+            );
         });
 
         return () => {
-            worker?.terminate();
-            setWorker(undefined);
-            setWorkerProxy(undefined);
+            workerProxy.detachConsumer();
         };
     }, []);
 
-    useEffect(() => {
-        if (!worker || !workerProxy || !onReady) {
-            return;
-        }
-
-        return onReady(workerProxy);
-    }, [worker, workerProxy]);
-
-    return workerProxy;
+    return workerProxy.methods;
 }

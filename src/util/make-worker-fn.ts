@@ -30,5 +30,5 @@ export function makeWorkerFn(workerModule: Record<string, unknown>) {
         .map(([fnName, fn]) => `${fnName}:${fn}`)
         .join(",")}}`;
 
-    return new Function(`(${workerMessageHandler.toString()})(${objStr})`);
+    return new Function(`(${workerMessageHandler})(${objStr})`);
 }
