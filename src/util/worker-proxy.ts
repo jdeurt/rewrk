@@ -8,28 +8,33 @@ type WorkerOperation = [
 ];
 
 export class WorkerProxy<T extends Record<string, unknown>> {
-    private operations: Record<string, WorkerOperation>;
-    private busyOperationIds: Set<string>;
-    private operationProvider: ProxiedWorkerMethods<T>;
+    private operationProvider = new Proxy({} as ProxiedWorkerMethods<T>, {
+        get:
+            (_, name: string) =>
+            async (...args: unknown[]) =>
+                new Promise((resolve, reject) => {
+                    this.operations[makeId()] = [
+                        [resolve, reject],
+                        [name, args],
+                    ];
+
+                    this.cycleOperations();
+                }),
+    });
     private operationConsumer?: Worker;
 
-    constructor() {
-        this.operations = {};
-        this.busyOperationIds = new Set();
-        this.operationProvider = new Proxy({} as ProxiedWorkerMethods<T>, {
-            get:
-                (_, name: string) =>
-                async (...args: unknown[]) =>
-                    new Promise((resolve, reject) => {
-                        this.operations[makeId()] = [
-                            [resolve, reject],
-                            [name, args],
-                        ];
+    private operations: Record<string, WorkerOperation> = {};
+    private busyOperationIds = new Set<string>();
 
-                        this.cycleOperations();
-                    }),
-        });
-    }
+    private operationConsumerListener = ({
+        data: [type, id, value],
+    }: MessageEvent<SuccessMessage | FailureMessage>) => {
+        const [resolveOrReject] = this.operations[id] ?? [];
+
+        resolveOrReject?.[{ exec_success: 0, exec_failure: 1 }[type]](value);
+
+        delete this.operations[id];
+    };
 
     get methods(): ProxiedWorkerMethods<T> {
         return this.operationProvider;
@@ -40,22 +45,21 @@ export class WorkerProxy<T extends Record<string, unknown>> {
 
         this.operationConsumer.addEventListener(
             "message",
-            ({
-                data: [type, id, value],
-            }: MessageEvent<SuccessMessage | FailureMessage>) => {
-                const [resolveOrReject] = this.operations[id] ?? [];
-
-                resolveOrReject?.[{ exec_success: 0, exec_failure: 1 }[type]](
-                    value
-                );
-            }
+            this.operationConsumerListener
         );
 
         this.cycleOperations();
     }
 
     detachConsumer(): void {
+        this.operationConsumer?.removeEventListener(
+            "message",
+            this.operationConsumerListener
+        );
+
         this.operationConsumer = undefined;
+
+        this.busyOperationIds.clear();
     }
 
     cycleOperations(): void {

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { ProxiedWorkerMethods } from "../types/proxied-worker-methods";
 import { makeWorkerFn } from "../util/make-worker-fn";
 import { makeWorkerURL } from "../util/make-worker-url";
-import { usePromise } from "../util/use-promise";
 import { WorkerProxy } from "../util/worker-proxy";
 
 /**
@@ -19,34 +18,43 @@ export function useWorker<T extends Record<string, unknown>>(
     const workerProxy = new WorkerProxy<T>();
 
     const [worker, setWorker] = useState<Worker>();
+    const [shouldTerminate, setShouldTerminate] = useState(false);
+
+    const workerPromise = useMemo(
+        () =>
+            dynamicImport
+                .then(makeWorkerFn)
+                .then(makeWorkerURL)
+                .then(
+                    (workerURL) =>
+                        new Worker(workerURL, {
+                            type: "module",
+                            ...options,
+                        })
+                ),
+        []
+    );
 
     useEffect(() => {
-        dynamicImport
-            .then(makeWorkerFn)
-            .then(makeWorkerURL)
-            .then(
-                (workerURL) =>
-                    new Worker(workerURL, {
-                        type: "module",
-                        ...options,
-                    })
-            )
-            .then(setWorker);
+        workerPromise.then((worker) => {
+            if (shouldTerminate) {
+                workerProxy.detachConsumer();
+                worker.terminate();
+                setShouldTerminate(false);
+            } else {
+                workerProxy.attachConsumer(worker);
+                setWorker(worker);
+            }
+        });
 
         return () => {
-            worker?.terminate();
+            if (!worker) setShouldTerminate(true);
+            else {
+                workerProxy.detachConsumer();
+                worker.terminate();
+            }
         };
     }, []);
-
-    useEffect(() => {
-        if (!worker) return;
-
-        workerProxy.attachConsumer(worker);
-
-        return () => {
-            workerProxy.detachConsumer();
-        };
-    }, [worker]);
 
     return workerProxy.methods;
 }
