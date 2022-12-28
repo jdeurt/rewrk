@@ -27,7 +27,7 @@ A proxy object that can be used to call the worker's exported functions. The pro
 import { useWorker } from "rewrk";
 
 const WorkerComponent = () => {
-    const worker = useWorker(() => import("./worker"));
+    const worker = useWorker(import("./worker"));
 
     return <button onClick={() => worker.doSomething()}>Do something</button>;
 };
