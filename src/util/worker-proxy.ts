@@ -35,6 +35,8 @@ export class WorkerProxy<T extends Record<string, unknown>> {
 
         resolveOrReject?.[{ exec_success: 0, exec_failure: 1 }[type]](value);
 
+        console.log("Consumed operation", type, id, value);
+
         delete this.operations[id];
     };
 
@@ -47,10 +49,7 @@ export class WorkerProxy<T extends Record<string, unknown>> {
 
         this.operationConsumer = worker;
 
-        this.operationConsumer.addEventListener(
-            "message",
-            this.operationConsumerListener
-        );
+        this.operationConsumer.onmessage = this.operationConsumerListener;
 
         this.cycleOperations();
     }
@@ -58,10 +57,7 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     detachConsumer(): void {
         console.log("Dettaching consumer", this.operationConsumer);
 
-        this.operationConsumer?.removeEventListener(
-            "message",
-            this.operationConsumerListener
-        );
+        (this.operationConsumer ?? ({} as any)).onmessage = undefined;
 
         this.operationConsumer = undefined;
 
@@ -70,6 +66,12 @@ export class WorkerProxy<T extends Record<string, unknown>> {
 
     cycleOperations(): void {
         if (!this.operationConsumer) return;
+
+        console.log(
+            "Cycling operations",
+            this.operations,
+            this.busyOperationIds
+        );
 
         for (const id in this.operations) {
             if (this.busyOperationIds.has(id)) continue;
