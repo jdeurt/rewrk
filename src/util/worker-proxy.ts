@@ -51,8 +51,6 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     detachConsumer(): void {
         (this.operationConsumer ?? ({} as any)).onmessage = undefined;
 
-        this.operationConsumer = undefined;
-
         this.busyOperationIds.clear();
     }
 
