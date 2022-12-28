@@ -12,6 +12,7 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     private busyOperationIds: Set<string>;
     private operationProvider: ProxiedWorkerMethods<T>;
     private operationConsumer?: Worker;
+    private isDestroyed = false;
 
     constructor() {
         this.operations = {};
@@ -36,6 +37,10 @@ export class WorkerProxy<T extends Record<string, unknown>> {
     }
 
     attachConsumer(worker: Worker): void {
+        if (this.isDestroyed) {
+            return worker.terminate();
+        }
+
         this.operationConsumer = worker;
 
         this.operationConsumer.addEventListener(
@@ -54,10 +59,13 @@ export class WorkerProxy<T extends Record<string, unknown>> {
         this.cycleOperations();
     }
 
-    detachConsumer() {
-        this.operationConsumer?.terminate();
+    destroyConsumer(): void {
+        if (this.isDestroyed) return;
 
+        this.operationConsumer?.terminate();
         this.operationConsumer = undefined;
+
+        this.isDestroyed = true;
     }
 
     cycleOperations(): void {

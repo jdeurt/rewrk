@@ -31,7 +31,7 @@ export function useWorker<T extends Record<string, unknown>>(
         });
 
         return () => {
-            workerProxy.detachConsumer();
+            workerProxy.destroyConsumer();
         };
     }, []);
 
