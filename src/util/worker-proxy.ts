@@ -18,7 +18,7 @@ export class WorkerProxy<T extends Record<string, unknown>> {
                         [name, args],
                     ];
 
-                    console.log("Producing operation", name, args);
+                    console.log("Producing operation", this, name, args);
 
                     this.cycleOperations();
                 }),
